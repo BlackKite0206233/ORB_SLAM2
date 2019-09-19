@@ -20,9 +20,11 @@
 
 
 #include<iostream>
+#include<vector>
 #include<algorithm>
 #include<fstream>
 #include<chrono>
+#include<ctime>
 
 #include<ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
@@ -53,25 +55,56 @@ public:
 	ORB_SLAM2::System* mpSLAM;
 };
 
+
+vector<cv::Mat> gyroMatrices;
+int gyroFrameCounter;
+
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "Mono");
 	ros::start();
 
-	if(argc != 3)
+	if(argc != 4)
 	{
-		cerr << endl << "Usage: rosrun ORB_SLAM2 Mono path_to_vocabulary path_to_settings" << endl;        
+		cerr << endl << "Usage: rosrun ORB_SLAM2 Mono path_to_vocabulary path_to_settings path_to_gyroscope" << endl;        
 		ros::shutdown();
 		return 1;
 	}    
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
+	cerr << endl << "Initialization" << endl;
+	// Load gyroscope matrix data here.
+	gyroFrameCounter = 0;
+	gyroMatrices.clear();
+
+	ifstream gyroFile(argv[3]);	
+	
+	string line;
+	while(getline(gyroFile, line)){
+		cv::Mat gyroMat(3, 3, CV_32F);
+		
+		istringstream line_ss(line);
+		
+		for(int row = 0;row < 3;row++){
+			for(int col = 0;col < 3;col++){
+				float val = 0;
+				line_ss >> val;
+				gyroMat.at<float>(row, col) = val;
+			}		
+		}
+		
+		gyroMatrices.push_back(gyroMat);
+	}
+
+	gyroFile.close();
+
 	ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
+        cerr << endl << "Done!" << endl;
 
 	ImageGrabber igb(&SLAM);
 
 	ros::NodeHandle nodeHandler;
-	ros::Subscriber sub = nodeHandler.subscribe("/camera/image_raw", 1, &ImageGrabber::GrabImage,&igb);
+	ros::Subscriber sub = nodeHandler.subscribe("/camera/rgb/image_color", 1, &ImageGrabber::GrabImage,&igb);
 	pose_pub = nodeHandler.advertise<geometry_msgs::PoseStamped>("/camera_pose",1);
 	pub_dense = nodeHandler.advertise<svo_msgs::DenseInput>("/ORB/DenseInput",1);
 	ros::spin();
@@ -87,8 +120,13 @@ int main(int argc, char **argv)
 	return 0;
 }
 
+
+
 void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 {
+    clock_t start, end;
+    double cpu_time_used;
+    start = clock();
     // Copy the ros image message to cv::Mat.
 	cv_bridge::CvImageConstPtr cv_ptr;
 	cv_bridge::CvImageConstPtr cv_ptr_rgb;
@@ -102,8 +140,16 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 		ROS_ERROR("cv_bridge exception: %s", e.what());
 		return;
 	}
+	
+	if(gyroFrameCounter >= gyroMatrices.size()){
+		return;	
+	}
 
-	cv::Mat pose = mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
+	// load gyrosopeMatrix w/ timestamp here, then pass it to TrackMonocular
+	cv::Mat gyroscopeMatrix = gyroMatrices[gyroFrameCounter];
+	gyroFrameCounter += 1;
+
+	cv::Mat pose = mpSLAM->TrackMonocular(cv_ptr->image, gyroscopeMatrix, cv_ptr->header.stamp.toSec());
 	if (pose.empty())
 		return;
 	
@@ -174,7 +220,9 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 		pub_dense.publish(msg_dense); 
 
 	}
-
+    end = clock();
+    cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+    ROS_INFO_STREAM("exe time: " << cpu_time_used << "\n");
 }
 
 

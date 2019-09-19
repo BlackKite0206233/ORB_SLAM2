@@ -34,6 +34,7 @@
 #include"PnPsolver.h"
 
 #include<iostream>
+#include<fstream>
 
 #include<mutex>
 
@@ -198,7 +199,7 @@ cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRe
 
     mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
 
-    Track();
+    //Track();
 
     return mCurrentFrame.mTcw.clone();
 }
@@ -229,13 +230,13 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
 
     mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
 
-    Track();
+    //Track();
 
     return mCurrentFrame.mTcw.clone();
 }
 
 
-cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
+cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im,const cv::Mat &gyroMat, const double &timestamp)
 {
     mImGray = im;
 
@@ -259,12 +260,12 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
     else
         mCurrentFrame = Frame(mImGray,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
 
-    Track();
+    Track(gyroMat);
 
     return mCurrentFrame.mTcw.clone();
 }
 
-void Tracking::Track()
+void Tracking::Track(const cv::Mat &gyroMat)
 {
     if(mState==NO_IMAGES_YET)
     {
@@ -281,7 +282,7 @@ void Tracking::Track()
         if(mSensor==System::STEREO || mSensor==System::RGBD)
             StereoInitialization();
         else
-            MonocularInitialization();
+            MonocularInitialization(gyroMat);
 
         mpFrameDrawer->Update(this);
 
@@ -367,6 +368,7 @@ void Tracking::Track()
 
                     if(bOKMM && !bOKReloc)
                     {
+                        gyroMat.copyTo(TcwMM.rowRange(0,3).colRange(0,3));
                         mCurrentFrame.SetPose(TcwMM);
                         mCurrentFrame.mvpMapPoints = vpMPsMM;
                         mCurrentFrame.mvbOutlier = vbOutMM;
@@ -560,7 +562,7 @@ void Tracking::StereoInitialization()
     }
 }
 
-void Tracking::MonocularInitialization()
+void Tracking::MonocularInitialization(const cv::Mat &gyroMat)
 {
 
     if(!mpInitializer)
@@ -625,7 +627,11 @@ void Tracking::MonocularInitialization()
             // Set Frame Poses
             mInitialFrame.SetPose(cv::Mat::eye(4,4,CV_32F));
             cv::Mat Tcw = cv::Mat::eye(4,4,CV_32F);
-            Rcw.copyTo(Tcw.rowRange(0,3).colRange(0,3));
+
+            gyroMat.copyTo(Tcw.rowRange(0,3).colRange(0,3));
+
+            //Rcw.copyTo(Tcw.rowRange(0,3).colRange(0,3));
+            
             tcw.copyTo(Tcw.rowRange(0,3).col(3));
             mCurrentFrame.SetPose(Tcw);
 
