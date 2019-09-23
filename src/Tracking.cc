@@ -368,6 +368,7 @@ void Tracking::Track(const cv::Mat &gyroMat)
 
                     if(bOKMM && !bOKReloc)
                     {
+                        gyroMat = gyroMat * mRotOffset;
                         gyroMat.copyTo(TcwMM.rowRange(0,3).colRange(0,3));
                         mCurrentFrame.SetPose(TcwMM);
                         mCurrentFrame.mvpMapPoints = vpMPsMM;
@@ -628,9 +629,9 @@ void Tracking::MonocularInitialization(const cv::Mat &gyroMat)
             mInitialFrame.SetPose(cv::Mat::eye(4,4,CV_32F));
             cv::Mat Tcw = cv::Mat::eye(4,4,CV_32F);
 
-            gyroMat.copyTo(Tcw.rowRange(0,3).colRange(0,3));
+            mRotOffset = gyroMat.t() * Rcw;
 
-            //Rcw.copyTo(Tcw.rowRange(0,3).colRange(0,3));
+            Rcw.copyTo(Tcw.rowRange(0,3).colRange(0,3));
             
             tcw.copyTo(Tcw.rowRange(0,3).col(3));
             mCurrentFrame.SetPose(Tcw);

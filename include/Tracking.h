@@ -162,8 +162,10 @@ protected:
     ORBVocabulary* mpORBVocabulary;
     KeyFrameDatabase* mpKeyFrameDB;
 
-    // Initalization (only for monocular)
+    // Initialization (only for monocular)
     Initializer* mpInitializer;
+    // Initialization rotation offset
+    cv::Mat mRotOffset;
 
     //Local Map
     KeyFrame* mpReferenceKF;
