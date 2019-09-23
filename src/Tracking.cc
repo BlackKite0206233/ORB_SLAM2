@@ -368,8 +368,8 @@ void Tracking::Track(const cv::Mat &gyroMat)
 
                     if(bOKMM && !bOKReloc)
                     {
-                        cv::Mat newGyroMat = gyroMat * mRotOffset;
-                        newGyroMat.copyTo(TcwMM.rowRange(0,3).colRange(0,3));
+                        //cv::Mat newGyroMat = gyroMat * mRotOffset;
+                        //newGyroMat.copyTo(TcwMM.rowRange(0,3).colRange(0,3));
                         mCurrentFrame.SetPose(TcwMM);
                         mCurrentFrame.mvpMapPoints = vpMPsMM;
                         mCurrentFrame.mvbOutlier = vbOutMM;
