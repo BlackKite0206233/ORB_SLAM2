@@ -25,15 +25,16 @@
 #include<fstream>
 #include<chrono>
 #include<ctime>
+#include <sstream>
 #include <string>
 #include <sys/stat.h>
 #include <signal.h>
 
 #include<ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
-
+#include <cv.h>
 #include<opencv2/core/core.hpp>
-
+#include <opencv2/imgproc/imgproc.hpp>
 #include"../../../include/System.h"
 
 #include<ros/ros.h>
@@ -41,6 +42,7 @@
 #include <tf/transform_broadcaster.h>
 #include <DenseInput.h>
 using namespace std;
+using namespace cv;
 
 void mySigintHandler(int sig) {
 	ros::shutdown();
@@ -81,7 +83,7 @@ int main(int argc, char **argv)
 		return 1;
 	}    
 	outputPath = argv[4];
-	const int dir_err = mkdir(outputPath, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	const int dir_err = mkdir(argv[4], S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
 	cerr << endl << "Initialization" << endl;
@@ -234,8 +236,12 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 		msg_dense.pose.orientation.w = q.w();
 
 		pub_dense.publish(msg_dense); 
-
-		imwrite(outputPath + "/" + keyFrameID + ".jpg", img_msg);
+                stringstream ss;
+		ss << outputPath << "/" << keyFrameID << ".jpg";
+		string str;
+		ss >> str;
+	//	imwrite(str, img_msg.image);
+		keyFrameID++;
 	}
     end = clock();
     cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
