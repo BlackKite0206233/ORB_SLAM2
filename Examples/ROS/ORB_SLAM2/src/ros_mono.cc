@@ -25,6 +25,8 @@
 #include<fstream>
 #include<chrono>
 #include<ctime>
+#include <string>
+#include <sys/stat.h>
 
 #include<ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
@@ -45,6 +47,9 @@ double old_max;
 double old_min;
 bool init = false;
 
+string outputPath;
+int keyFrameID = 0;
+
 class ImageGrabber
 {
 public:
@@ -64,12 +69,14 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "Mono");
 	ros::start();
 
-	if(argc != 4)
+	if(argc != 5)
 	{
-		cerr << endl << "Usage: rosrun ORB_SLAM2 Mono path_to_vocabulary path_to_settings path_to_gyroscope" << endl;        
+		cerr << endl << "Usage: rosrun ORB_SLAM2 Mono path_to_vocabulary path_to_settings path_to_gyroscope output_path" << endl;        
 		ros::shutdown();
 		return 1;
 	}    
+	outputPath = argv[4];
+	const int dir_err = mkdir(outputPath, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
 	cerr << endl << "Initialization" << endl;
@@ -217,8 +224,10 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 		msg_dense.pose.orientation.y = q.y();
 		msg_dense.pose.orientation.z = q.z();
 		msg_dense.pose.orientation.w = q.w();
+
 		pub_dense.publish(msg_dense); 
 
+		imwrite(outputPath + "/" + keyFrameID + ".jpg", img_msg);
 	}
     end = clock();
     cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
