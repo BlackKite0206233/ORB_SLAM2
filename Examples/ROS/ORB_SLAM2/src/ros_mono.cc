@@ -27,6 +27,7 @@
 #include<ctime>
 #include <string>
 #include <sys/stat.h>
+#include <signal.h>
 
 #include<ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
@@ -40,6 +41,10 @@
 #include <tf/transform_broadcaster.h>
 #include <DenseInput.h>
 using namespace std;
+
+void mySigintHandler(int sig) {
+	ros::shutdown();
+}
 
 ros::Publisher pose_pub; 
 ros::Publisher pub_dense;
@@ -114,6 +119,9 @@ int main(int argc, char **argv)
 	ros::Subscriber sub = nodeHandler.subscribe("/camera/rgb/image_color", 1, &ImageGrabber::GrabImage,&igb);
 	pose_pub = nodeHandler.advertise<geometry_msgs::PoseStamped>("/camera_pose",1);
 	pub_dense = nodeHandler.advertise<svo_msgs::DenseInput>("/ORB/DenseInput",1);
+
+	signal(SIGINT, mySigintHandler);
+	
 	ros::spin();
 
     // Stop all threads
