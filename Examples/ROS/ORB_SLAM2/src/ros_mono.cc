@@ -146,7 +146,7 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 	//}
 
 	// load gyrosopeMatrix w/ timestamp here, then pass it to TrackMonocular
-	cv::Mat gyroscopeMatrix = cv::Mat();//gyroMatrices[gyroFrameCounter];
+	cv::Mat gyroscopeMatrix = gyroMatrices[0];//gyroFrameCounter];
 	//gyroFrameCounter += 1;
 
 	cv::Mat pose = mpSLAM->TrackMonocular(cv_ptr->image, gyroscopeMatrix, cv_ptr->header.stamp.toSec());
