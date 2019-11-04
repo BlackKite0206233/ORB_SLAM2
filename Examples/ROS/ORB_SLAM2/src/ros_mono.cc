@@ -141,13 +141,13 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 		return;
 	}
 	
-	if(gyroFrameCounter >= gyroMatrices.size()){
-		return;	
-	}
+	//if(gyroFrameCounter >= gyroMatrices.size()){
+	//	return;	
+	//}
 
 	// load gyrosopeMatrix w/ timestamp here, then pass it to TrackMonocular
-	cv::Mat gyroscopeMatrix = gyroMatrices[gyroFrameCounter];
-	gyroFrameCounter += 1;
+	cv::Mat gyroscopeMatrix = cv::Mat();//gyroMatrices[gyroFrameCounter];
+	//gyroFrameCounter += 1;
 
 	cv::Mat pose = mpSLAM->TrackMonocular(cv_ptr->image, gyroscopeMatrix, cv_ptr->header.stamp.toSec());
 	if (pose.empty())
