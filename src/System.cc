@@ -370,9 +370,9 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
         //  << " " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << endl;
         f << setprecision(6) << pKF->mTimeStamp << endl 
           << setprecision(7)  << t.at<float>(0) << " " << t.at<float>(1) << " " << t.at<float>(2) << endl
-          << R[0][0] << " " << R[0][1] << " " << R[0][2] << endl
-          << R[1][0] << " " << R[1][1] << " " << R[1][2] << endl
-          << R[2][0] << " " << R[2][1] << " " << R[2][2] << endl;
+          << R.at<double>(0, 0) << " " << R.at<double>(0, 1) << " " << R.at<double>(0, 2) << endl
+          << R.at<double>(1, 0) << " " << R.at<double>(1, 1) << " " << R.at<double>(1, 2) << endl
+          << R.at<double>(2, 0) << " " << R.at<double>(2, 1) << " " << R.at<double>(2, 2) << endl;
 
     }
 
