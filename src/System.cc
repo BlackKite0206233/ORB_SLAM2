@@ -363,7 +363,7 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
         if(pKF->isBad())
             continue;
 
-        cv::Mat R = pKF->GetRotation();
+        cv::Mat R = pKF->GetRotation().t();
         // vector<float> q = Converter::toQuaternion(R);
         cv::Mat t = pKF->GetCameraCenter();
 
