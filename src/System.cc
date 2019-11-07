@@ -366,13 +366,30 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
         cv::Mat R = pKF->GetRotation();
         // vector<float> q = Converter::toQuaternion(R);
         cv::Mat t = pKF->GetCameraCenter();
+
+        cv::Mat viewMatrix = cv::Mat(3, 4, CV_64F);
+        viewMatrix.at<dloat>(0, 0) = R.at<float>(0, 0);
+        viewMatrix.at<dloat>(0, 1) = R.at<float>(0, 1);
+        viewMatrix.at<dloat>(0, 2) = R.at<float>(0, 2);
+        viewMatrix.at<dloat>(0, 3) = t.at<float>(0);
+        viewMatrix.at<dloat>(1, 0) = R.at<float>(1, 0);
+        viewMatrix.at<dloat>(1, 1) = R.at<float>(1, 1);
+        viewMatrix.at<dloat>(1, 2) = R.at<float>(1, 2);
+        viewMatrix.at<dloat>(1, 3) = t.at<float>(1);
+        viewMatrix.at<dloat>(2, 0) = R.at<float>(2, 0);
+        viewMatrix.at<dloat>(2, 1) = R.at<float>(2, 1);
+        viewMatrix.at<dloat>(2, 2) = R.at<float>(2, 2);
+        viewMatrix.at<dloat>(2, 3) = t.at<float>(2);
+
+        viewMatrix = pKF->mK * viewMatrix;
+
         //f << setprecision(6) << pKF->mTimeStamp << setprecision(7) << " " << t.at<float>(0) << " " << t.at<float>(1) << " " << t.at<float>(2)
         //  << " " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << endl;
         f << setprecision(6) << pKF->mTimeStamp << endl 
           << setprecision(7) 
-          << R.at<float>(0, 0) << " " << R.at<float>(0, 1) << " " << R.at<float>(0, 2) << t.at<float>(0) << endl
-          << R.at<float>(1, 0) << " " << R.at<float>(1, 1) << " " << R.at<float>(1, 2) << t.at<float>(1) << endl
-          << R.at<float>(2, 0) << " " << R.at<float>(2, 1) << " " << R.at<float>(2, 2) << t.at<float>(2) << endl
+          << viewMatrix.at<float>(0, 0) << " " << viewMatrix.at<float>(0, 1) << " " << viewMatrix.at<float>(0, 2) << " " << viewMatrix.at<float>(0, 3) << endl
+          << viewMatrix.at<float>(1, 0) << " " << viewMatrix.at<float>(1, 1) << " " << viewMatrix.at<float>(1, 2) << " " << viewMatrix.at<float>(1, 3) << endl
+          << viewMatrix.at<float>(2, 0) << " " << viewMatrix.at<float>(2, 1) << " " << viewMatrix.at<float>(2, 2) << " " << viewMatrix.at<float>(2, 3) << endl
           << endl;
 
     }
