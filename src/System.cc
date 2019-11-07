@@ -367,19 +367,19 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
         // vector<float> q = Converter::toQuaternion(R);
         cv::Mat t = pKF->GetCameraCenter();
 
-        cv::Mat viewMatrix = cv::Mat(3, 4, CV_64F);
-        viewMatrix.at<dloat>(0, 0) = R.at<float>(0, 0);
-        viewMatrix.at<dloat>(0, 1) = R.at<float>(0, 1);
-        viewMatrix.at<dloat>(0, 2) = R.at<float>(0, 2);
-        viewMatrix.at<dloat>(0, 3) = t.at<float>(0);
-        viewMatrix.at<dloat>(1, 0) = R.at<float>(1, 0);
-        viewMatrix.at<dloat>(1, 1) = R.at<float>(1, 1);
-        viewMatrix.at<dloat>(1, 2) = R.at<float>(1, 2);
-        viewMatrix.at<dloat>(1, 3) = t.at<float>(1);
-        viewMatrix.at<dloat>(2, 0) = R.at<float>(2, 0);
-        viewMatrix.at<dloat>(2, 1) = R.at<float>(2, 1);
-        viewMatrix.at<dloat>(2, 2) = R.at<float>(2, 2);
-        viewMatrix.at<dloat>(2, 3) = t.at<float>(2);
+        cv::Mat viewMatrix = cv::Mat(3, 4, CV_32F);
+        viewMatrix.at<float>(0, 0) = R.at<float>(0, 0);
+        viewMatrix.at<float>(0, 1) = R.at<float>(0, 1);
+        viewMatrix.at<float>(0, 2) = R.at<float>(0, 2);
+        viewMatrix.at<float>(0, 3) = t.at<float>(0);
+        viewMatrix.at<float>(1, 0) = R.at<float>(1, 0);
+        viewMatrix.at<float>(1, 1) = R.at<float>(1, 1);
+        viewMatrix.at<float>(1, 2) = R.at<float>(1, 2);
+        viewMatrix.at<float>(1, 3) = t.at<float>(1);
+        viewMatrix.at<float>(2, 0) = R.at<float>(2, 0);
+        viewMatrix.at<float>(2, 1) = R.at<float>(2, 1);
+        viewMatrix.at<float>(2, 2) = R.at<float>(2, 2);
+        viewMatrix.at<float>(2, 3) = t.at<float>(2);
 
         viewMatrix = pKF->mK * viewMatrix;
 
