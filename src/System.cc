@@ -363,25 +363,7 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
         if(pKF->isBad())
             continue;
 
-        cv::Mat R = pKF->GetRotation().t();
-        // vector<float> q = Converter::toQuaternion(R);
-        cv::Mat t = pKF->GetCameraCenter();
-
-        cv::Mat viewMatrix = cv::Mat(3, 4, CV_32F);
-        viewMatrix.at<float>(0, 0) = R.at<float>(0, 0);
-        viewMatrix.at<float>(0, 1) = R.at<float>(0, 1);
-        viewMatrix.at<float>(0, 2) = R.at<float>(0, 2);
-        viewMatrix.at<float>(0, 3) = -t.at<float>(0);
-        viewMatrix.at<float>(1, 0) = R.at<float>(1, 0);
-        viewMatrix.at<float>(1, 1) = R.at<float>(1, 1);
-        viewMatrix.at<float>(1, 2) = R.at<float>(1, 2);
-        viewMatrix.at<float>(1, 3) = -t.at<float>(1);
-        viewMatrix.at<float>(2, 0) = R.at<float>(2, 0);
-        viewMatrix.at<float>(2, 1) = R.at<float>(2, 1);
-        viewMatrix.at<float>(2, 2) = R.at<float>(2, 2);
-        viewMatrix.at<float>(2, 3) = -t.at<float>(2);
-
-        viewMatrix = pKF->mK * viewMatrix;
+        cv::Mat viewMatrix = pKF->mK * pKF->GetPoseInverse();
 
         //f << setprecision(6) << pKF->mTimeStamp << setprecision(7) << " " << t.at<float>(0) << " " << t.at<float>(1) << " " << t.at<float>(2)
         //  << " " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << endl;
