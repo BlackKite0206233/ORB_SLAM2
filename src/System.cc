@@ -363,9 +363,9 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
         if(pKF->isBad())
             continue;
 
-        cv::Mat pose = pKF->getPose();
-        cv::Mat poseInverse = pKF->getPoseInverse();
-        cv::Mat viewMatrix = pKF->mK * pose();
+        cv::Mat pose = pKF->GetPose();
+        cv::Mat poseInverse = pKF->GetPoseInverse();
+        cv::Mat viewMatrix = pKF->mK * pose;
 
         //f << setprecision(6) << pKF->mTimeStamp << setprecision(7) << " " << t.at<float>(0) << " " << t.at<float>(1) << " " << t.at<float>(2)
         //  << " " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << endl;
