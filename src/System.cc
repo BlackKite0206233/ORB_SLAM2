@@ -363,7 +363,7 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
         if(pKF->isBad())
             continue;
 
-        cv::Mat pose = pKF->GetPose().rowRange(0,3).colRange(0,4).clone();
+        cv::Mat pose = pKF->GetPoseInverse().rowRange(0,3).colRange(0,4).clone();
         pose.at<float>(0, 3) *= 100;
         pose.at<float>(1, 3) *= 100;
         pose.at<float>(2, 3) *= 100;
