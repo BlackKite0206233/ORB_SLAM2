@@ -363,10 +363,14 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
         if(pKF->isBad())
             continue;
 
-        cv::Mat pose = pKF->GetPoseInverse().rowRange(0,3).colRange(0,4).clone();
+        cv::Mat pose = pKF->GetPose().rowRange(0,3).colRange(0,4).clone();
+        cv::Mat poseInverse = pKF->GetPoseInverse().rowRange(0,3).colRange(0,4).clone();
         pose.at<float>(0, 3) *= 100;
         pose.at<float>(1, 3) *= 100;
         pose.at<float>(2, 3) *= 100;
+        poseInverse.at<float>(0, 3) *= 100;
+        poseInverse.at<float>(1, 3) *= 100;
+        poseInverse.at<float>(2, 3) *= 100;
         cv::Mat viewMatrix = pKF->mK * pose;
 
         //f << setprecision(6) << pKF->mTimeStamp << setprecision(7) << " " << t.at<float>(0) << " " << t.at<float>(1) << " " << t.at<float>(2)
@@ -376,6 +380,9 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
           << pose.at<float>(0, 0) << " " << pose.at<float>(0, 1) << " " << pose.at<float>(0, 2) << " " << pose.at<float>(0, 3) << endl
           << pose.at<float>(1, 0) << " " << pose.at<float>(1, 1) << " " << pose.at<float>(1, 2) << " " << pose.at<float>(1, 3) << endl
           << pose.at<float>(2, 0) << " " << pose.at<float>(2, 1) << " " << pose.at<float>(2, 2) << " " << pose.at<float>(2, 3) << endl
+          << poseInverse.at<float>(0, 0) << " " << poseInverse.at<float>(0, 1) << " " << poseInverse.at<float>(0, 2) << " " << poseInverse.at<float>(0, 3) << endl
+          << poseInverse.at<float>(1, 0) << " " << poseInverse.at<float>(1, 1) << " " << poseInverse.at<float>(1, 2) << " " << poseInverse.at<float>(1, 3) << endl
+          << poseInverse.at<float>(2, 0) << " " << poseInverse.at<float>(2, 1) << " " << poseInverse.at<float>(2, 2) << " " << poseInverse.at<float>(2, 3) << endl
           << viewMatrix.at<float>(0, 0) << " " << viewMatrix.at<float>(0, 1) << " " << viewMatrix.at<float>(0, 2) << " " << viewMatrix.at<float>(0, 3) << endl
           << viewMatrix.at<float>(1, 0) << " " << viewMatrix.at<float>(1, 1) << " " << viewMatrix.at<float>(1, 2) << " " << viewMatrix.at<float>(1, 3) << endl
           << viewMatrix.at<float>(2, 0) << " " << viewMatrix.at<float>(2, 1) << " " << viewMatrix.at<float>(2, 2) << " " << viewMatrix.at<float>(2, 3) << endl;
