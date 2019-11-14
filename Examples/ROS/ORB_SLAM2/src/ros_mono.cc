@@ -83,8 +83,7 @@ int main(int argc, char **argv)
 	}    
 	outputPath = argv[4];
 	mkdir(argv[4], S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-	mkdir((outputPath + "/poseOrigin").c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-	mkdir((outputPath + "/poseInverseOrigin").c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	mkdir((outputPath + "/viewMatrix").c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
 	cerr << endl << "Initialization" << endl;
@@ -239,31 +238,20 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 		pub_dense.publish(msg_dense); 
 
 		cv::Mat pose = mpSLAM->mpTracker->mCurrentFrame.mTcw.rowRange(0,3).colRange(0,4).clone();
-		cv::Mat poseInverse = mpSLAM->mpTracker->mCurrentFrame.mTcw.inv().rowRange(0,3).colRange(0,4).clone();
 		pose.at<float>(0, 3) *= 100;
         pose.at<float>(1, 3) *= 100;
         pose.at<float>(2, 3) *= 100;
-        poseInverse.at<float>(0, 3) *= 100;
-        poseInverse.at<float>(1, 3) *= 100;
-        poseInverse.at<float>(2, 3) *= 100;
+
+		cv::Mat viewMatrix = mpSLAM->mpTracker->mCurrentFrame.mK * pose;
+		
 		stringstream ss;
-		ss << outputPath << "/poseOrigin/" << setprecision(6) << mpSLAM->mpTracker->mCurrentFrame.mTimeStamp << ".txt";
-		string str;
+		ss << outputPath << "/viewMatrix/" << setprecision(6) << mpSLAM->mpTracker->mCurrentFrame.mTimeStamp << ".txt";
 		ss >> str;
-		ofstream of(str);
+		ofstream = of(str);
 		of << setprecision(7)
-		   << pose.at<float>(0, 0) << " " << pose.at<float>(0, 1) << " " << pose.at<float>(0, 2) << " " << pose.at<float>(0, 3) << endl
-		   << pose.at<float>(1, 0) << " " << pose.at<float>(1, 1) << " " << pose.at<float>(1, 2) << " " << pose.at<float>(1, 3) << endl
-		   << pose.at<float>(2, 0) << " " << pose.at<float>(2, 1) << " " << pose.at<float>(2, 2) << " " << pose.at<float>(2, 3) << endl;
-		of.close();
-		ss.clear();
-		ss << outputPath << "/poseInverseOrigin/" << setprecision(6) << mpSLAM->mpTracker->mCurrentFrame.mTimeStamp << ".txt";
-		ss >> str;
-		of = ofstream(str);
-		of << setprecision(7)
-		   << poseInverse.at<float>(0, 0) << " " << poseInverse.at<float>(0, 1) << " " << poseInverse.at<float>(0, 2) << " " << poseInverse.at<float>(0, 3) << endl
-		   << poseInverse.at<float>(1, 0) << " " << poseInverse.at<float>(1, 1) << " " << poseInverse.at<float>(1, 2) << " " << poseInverse.at<float>(1, 3) << endl
-		   << poseInverse.at<float>(2, 0) << " " << poseInverse.at<float>(2, 1) << " " << poseInverse.at<float>(2, 2) << " " << poseInverse.at<float>(2, 3) << endl;
+		   << viewMatrix.at<float>(0, 0) << " " << viewMatrix.at<float>(0, 1) << " " << viewMatrix.at<float>(0, 2) << " " << viewMatrix.at<float>(0, 3) << endl
+		   << viewMatrix.at<float>(1, 0) << " " << viewMatrix.at<float>(1, 1) << " " << viewMatrix.at<float>(1, 2) << " " << viewMatrix.at<float>(1, 3) << endl
+		   << viewMatrix.at<float>(2, 0) << " " << viewMatrix.at<float>(2, 1) << " " << viewMatrix.at<float>(2, 2) << " " << viewMatrix.at<float>(2, 3) << endl;
 	}
     end = clock();
     cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
