@@ -44,8 +44,9 @@
 using namespace std;
 using namespace cv;
 
-void mySigintHandler(int sig) {
-	ros::shutdown();
+void mySigintHandler(const std_msgs::String::ConstPtr& msg) {
+	if (msg->data == "finish")
+		ros::shutdown();
 }
 
 ros::Publisher pose_pub; 
@@ -118,11 +119,12 @@ int main(int argc, char **argv)
 	ImageGrabber igb(&SLAM);
 
 	ros::NodeHandle nodeHandler;
-	ros::Subscriber sub = nodeHandler.subscribe("/camera/rgb/image_color", 1, &ImageGrabber::GrabImage,&igb);
-	pose_pub = nodeHandler.advertise<geometry_msgs::PoseStamped>("/camera_pose",1);
-	pub_dense = nodeHandler.advertise<svo_msgs::DenseInput>("/ORB/DenseInput",1);
+	ros::Subscriber sub = nodeHandler.subscribe("/camera/rgb/image_color", 1000, &ImageGrabber::GrabImage, &igb);
+	ros::Subscriber sub = nodeHandler.subscribe("/status", 1000, mySigintHandler);
+	pose_pub = nodeHandler.advertise<geometry_msgs::PoseStamped>("/camera_pose",1000);
+	pub_dense = nodeHandler.advertise<svo_msgs::DenseInput>("/ORB/DenseInput",1000);
 
-	signal(SIGINT, mySigintHandler);
+	// signal(SIGINT, mySigintHandler);
 	
 	ros::spin();
 
