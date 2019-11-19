@@ -240,9 +240,8 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 		pub_dense.publish(msg_dense); 
 
 		cv::Mat pose = mpSLAM->mpTracker->mCurrentFrame.mTcw.rowRange(0,3).colRange(0,4).clone();
-		pose.at<float>(0, 3) *= 100;
-        pose.at<float>(1, 3) *= 100;
-        pose.at<float>(2, 3) *= 100;
+		cv::Mat tmp = mpSLAM->mpTracker->mCurrentFrame.mTcw.inv();
+		cv::Mat poseInv = tmp.rowRange(0,3).colRange(0,4).clone();
 
 		cv::Mat viewMatrix = mpSLAM->mpTracker->mCurrentFrame.mK * pose;
 		
@@ -251,6 +250,12 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 		ss >> str;
 		ofstream = of(str);
 		of << setprecision(7)
+		   << pose.at<float>(0, 0) << " " << pose.at<float>(0, 1) << " " << pose.at<float>(0, 2) << " " << pose.at<float>(0, 3) << endl
+		   << pose.at<float>(1, 0) << " " << pose.at<float>(1, 1) << " " << pose.at<float>(1, 2) << " " << pose.at<float>(1, 3) << endl
+		   << pose.at<float>(2, 0) << " " << pose.at<float>(2, 1) << " " << pose.at<float>(2, 2) << " " << pose.at<float>(2, 3) << endl
+		   << poseInv.at<float>(0, 0) << " " << poseInv.at<float>(0, 1) << " " << poseInv.at<float>(0, 2) << " " << poseInv.at<float>(0, 3) << endl
+		   << poseInv.at<float>(1, 0) << " " << poseInv.at<float>(1, 1) << " " << poseInv.at<float>(1, 2) << " " << poseInv.at<float>(1, 3) << endl
+		   << poseInv.at<float>(2, 0) << " " << poseInv.at<float>(2, 1) << " " << poseInv.at<float>(2, 2) << " " << poseInv.at<float>(2, 3) << endl
 		   << viewMatrix.at<float>(0, 0) << " " << viewMatrix.at<float>(0, 1) << " " << viewMatrix.at<float>(0, 2) << " " << viewMatrix.at<float>(0, 3) << endl
 		   << viewMatrix.at<float>(1, 0) << " " << viewMatrix.at<float>(1, 1) << " " << viewMatrix.at<float>(1, 2) << " " << viewMatrix.at<float>(1, 3) << endl
 		   << viewMatrix.at<float>(2, 0) << " " << viewMatrix.at<float>(2, 1) << " " << viewMatrix.at<float>(2, 2) << " " << viewMatrix.at<float>(2, 3) << endl;

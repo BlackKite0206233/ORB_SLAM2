@@ -354,7 +354,7 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
     f.open(filename.c_str());
     f << fixed;
 
-    for(size_t i=0; i<vpKFs.size(); i++)
+    for(size_t i=10; i<vpKFs.size(); i++)
     {
         KeyFrame* pKF = vpKFs[i];
 
@@ -363,9 +363,24 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
         if(pKF->isBad())
             continue;
 
+        cv::Mat Tcw = pKF->GetPose().rowRange(0,3).colRange(0,4).clone();
+        cv::Mat Twc = pKF->GetPoseInverse().rowRange(0,3).colRange(0,4).clone();
+        cv::Mat result = pKF->mK * Tcw;
+
         //f << setprecision(6) << pKF->mTimeStamp << setprecision(7) << " " << t.at<float>(0) << " " << t.at<float>(1) << " " << t.at<float>(2)
         //  << " " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << endl;
-        f << setprecision(6) << pKF->mTimeStamp << endl;
+        f << setprecision(6) << pKF->mTimeStamp << endl
+          << setprecision(7)
+          << Tcw.at<float>(0, 0) << " " << Tcw.at<float>(0, 1) << " " << Tcw.at<float>(0, 2) << " " << Tcw.at<float>(0, 3) << endl
+          << Tcw.at<float>(1, 0) << " " << Tcw.at<float>(1, 1) << " " << Tcw.at<float>(1, 2) << " " << Tcw.at<float>(1, 3) << endl
+          << Tcw.at<float>(2, 0) << " " << Tcw.at<float>(2, 1) << " " << Tcw.at<float>(2, 2) << " " << Tcw.at<float>(2, 3) << endl
+          << Twc.at<float>(0, 0) << " " << Twc.at<float>(0, 1) << " " << Twc.at<float>(0, 2) << " " << Twc.at<float>(0, 3) << endl
+          << Twc.at<float>(1, 0) << " " << Twc.at<float>(1, 1) << " " << Twc.at<float>(1, 2) << " " << Twc.at<float>(1, 3) << endl
+          << Twc.at<float>(2, 0) << " " << Twc.at<float>(2, 1) << " " << Twc.at<float>(2, 2) << " " << Twc.at<float>(2, 3) << endl
+          << result.at<float>(0, 0) << " " << result.at<float>(0, 1) << " " << result.at<float>(0, 2) << " "  << result.at<float>(0, 3) << endl
+          << result.at<float>(1, 0) << " " << result.at<float>(1, 1) << " " << result.at<float>(1, 2) << " " << result.at<float>(1, 3) << endl
+          << result.at<float>(2, 0) << " " << result.at<float>(2, 1) << " " << result.at<float>(2, 2) << " " << result.at<float>(2, 3) << endl;
+
     }
 
     f.close();
