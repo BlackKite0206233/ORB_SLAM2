@@ -30,7 +30,9 @@
 
 #include<mutex>
 #include<thread>
-
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 namespace ORB_SLAM2
 {
@@ -66,10 +68,12 @@ void LoopClosing::Run()
             // Detect loop candidates and check covisibility consistency
             if(DetectLoop())
             {
+                cout << "detect loop" << endl;
                // Compute similarity transformation [sR|t]
                // In the stereo/RGBD case s=1
                if(ComputeSim3())
                {
+                   cout << "correct loop" << endl;
                    // Perform loop fusion and pose graph optimization
                    CorrectLoop();
                }
@@ -110,8 +114,10 @@ bool LoopClosing::DetectLoop()
         mpCurrentKF->SetNotErase();
     }
 
+    const int newFrameNum = 10;
+
     //If the map contains less than 10 KF or less than 10 KF have passed from last loop detection
-    if(mpCurrentKF->mnId<mLastLoopKFid+10)
+    if(mpCurrentKF->mnId<mLastLoopKFid+newFrameNum)
     {
         mpKeyFrameDB->add(mpCurrentKF);
         mpCurrentKF->SetErase();
@@ -138,7 +144,7 @@ bool LoopClosing::DetectLoop()
     }
 
     // Query the database imposing the minimum score
-    vector<KeyFrame*> vpCandidateKFs = mpKeyFrameDB->DetectLoopCandidates(mpCurrentKF, minScore);
+    vector<KeyFrame*> vpCandidateKFs = mpKeyFrameDB->DetectLoopCandidates(mpCurrentKF, minScore, newFrameNum);
 
     // If there are no loop candidates, just add new keyframe and return false
     if(vpCandidateKFs.empty())
@@ -233,7 +239,6 @@ bool LoopClosing::ComputeSim3()
     // For each consistent loop candidate we try to compute a Sim3
 
     const int nInitialCandidates = mvpEnoughConsistentCandidates.size();
-
     // We compute first ORB matches for each candidate
     // If enough matches are found, we setup a Sim3Solver
     ORBmatcher matcher(0.75,true);
@@ -248,6 +253,8 @@ bool LoopClosing::ComputeSim3()
     vbDiscarded.resize(nInitialCandidates);
 
     int nCandidates=0; //candidates with enough matches
+
+    const int matchTh = 20;
 
     for(int i=0; i<nInitialCandidates; i++)
     {
@@ -264,7 +271,7 @@ bool LoopClosing::ComputeSim3()
 
         int nmatches = matcher.SearchByBoW(mpCurrentKF,pKF,vvpMapPointMatches[i]);
 
-        if(nmatches<20)
+        if(nmatches<matchTh)
         {
             vbDiscarded[i] = true;
             continue;
@@ -272,14 +279,17 @@ bool LoopClosing::ComputeSim3()
         else
         {
             Sim3Solver* pSolver = new Sim3Solver(mpCurrentKF,pKF,vvpMapPointMatches[i],mbFixScale);
-            pSolver->SetRansacParameters(0.99,20,300);
+            pSolver->SetRansacParameters(0.99,matchTh,1000);
             vpSim3Solvers[i] = pSolver;
         }
 
         nCandidates++;
     }
+    cout << endl << "n candidate: " << nCandidates << endl;
 
     bool bMatch = false;
+
+    const int nIter = 5;
 
     // Perform alternatively RANSAC iterations for each candidate
     // until one is succesful or all fail
@@ -298,7 +308,7 @@ bool LoopClosing::ComputeSim3()
             bool bNoMore;
 
             Sim3Solver* pSolver = vpSim3Solvers[i];
-            cv::Mat Scm  = pSolver->iterate(5,bNoMore,vbInliers,nInliers);
+            cv::Mat Scm  = pSolver->iterate(nIter,bNoMore,vbInliers,nInliers);
 
             // If Ransac reachs max. iterations discard keyframe
             if(bNoMore)
@@ -324,9 +334,8 @@ bool LoopClosing::ComputeSim3()
 
                 g2o::Sim3 gScm(Converter::toMatrix3d(R),Converter::toVector3d(t),s);
                 const int nInliers = Optimizer::OptimizeSim3(mpCurrentKF, pKF, vpMapPointMatches, gScm, 10, mbFixScale);
-
                 // If optimization is succesful stop ransacs and continue
-                if(nInliers>=20)
+                if(nInliers>=matchTh)
                 {
                     bMatch = true;
                     mpMatchedKF = pKF;
@@ -339,8 +348,8 @@ bool LoopClosing::ComputeSim3()
                 }
             }
         }
+        cout << endl;
     }
-
     if(!bMatch)
     {
         for(int i=0; i<nInitialCandidates; i++)
@@ -382,7 +391,7 @@ bool LoopClosing::ComputeSim3()
             nTotalMatches++;
     }
 
-    if(nTotalMatches>=40)
+    if(nTotalMatches>=matchTh * 2)
     {
         for(int i=0; i<nInitialCandidates; i++)
             if(mvpEnoughConsistentCandidates[i]!=mpMatchedKF)

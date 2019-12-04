@@ -44,9 +44,8 @@
 using namespace std;
 using namespace cv;
 
-void mySigintHandler(const std_msgs::String::ConstPtr& msg) {
-	if (msg->data == "finish")
-		ros::shutdown();
+void mySigintHandler(int s) {
+	ros::shutdown();
 }
 
 ros::Publisher pose_pub; 
@@ -84,7 +83,6 @@ int main(int argc, char **argv)
 	}    
 	outputPath = argv[4];
 	mkdir(argv[4], S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-	mkdir((outputPath + "/viewMatrix").c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
 	cerr << endl << "Initialization" << endl;
@@ -120,11 +118,11 @@ int main(int argc, char **argv)
 
 	ros::NodeHandle nodeHandler;
 	ros::Subscriber sub = nodeHandler.subscribe("/camera/rgb/image_color", 1000, &ImageGrabber::GrabImage, &igb);
-	ros::Subscriber sub = nodeHandler.subscribe("/status", 1000, mySigintHandler);
-	pose_pub = nodeHandler.advertise<geometry_msgs::PoseStamped>("/camera_pose",1000);
-	pub_dense = nodeHandler.advertise<svo_msgs::DenseInput>("/ORB/DenseInput",1000);
+	//ros::Subscriber sub = nodeHandler.subscribe("/status", 1000, mySigintHandler);
+	// pose_pub = nodeHandler.advertise<geometry_msgs::PoseStamped>("/camera_pose",1);
+	// pub_dense = nodeHandler.advertise<svo_msgs::DenseInput>("/ORB/DenseInput",1);
 
-	// signal(SIGINT, mySigintHandler);
+	signal(SIGINT, mySigintHandler);
 	
 	ros::spin();
 
@@ -132,7 +130,7 @@ int main(int argc, char **argv)
 	SLAM.Shutdown();
 
     // Save camera trajectory
-	SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
+	SLAM.SaveKeyFrameTrajectoryTUM(outputPath + "/KeyFrameTrajectory.txt");
 
 	ros::shutdown();
 
@@ -143,9 +141,9 @@ int main(int argc, char **argv)
 
 void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 {
-    clock_t start, end;
-    double cpu_time_used;
-    start = clock();
+    // clock_t start, end;
+    // double cpu_time_used;
+    // start = clock();
     // Copy the ros image message to cv::Mat.
 	cv_bridge::CvImageConstPtr cv_ptr;
 	cv_bridge::CvImageConstPtr cv_ptr_rgb;
@@ -169,100 +167,79 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 	//gyroFrameCounter += 1;
 
 	cv::Mat pose = mpSLAM->TrackMonocular(cv_ptr->image, gyroscopeMatrix, cv_ptr->header.stamp.toSec());
-	if (pose.empty())
-		return;
+	// if (pose.empty())
+	// 	return;
 	
-	cv::Mat  TWC=mpSLAM->mpTracker->mCurrentFrame.mTcw.inv();  
-	cv::Mat RWC= TWC.rowRange(0,3).colRange(0,3);  
-	cv::Mat tWC= TWC.rowRange(0,3).col(3);
+	// cv::Mat  TWC=mpSLAM->mpTracker->mCurrentFrame.mTcw.inv();  
+	// cv::Mat RWC= TWC.rowRange(0,3).colRange(0,3);  
+	// cv::Mat tWC= TWC.rowRange(0,3).col(3);
 
-	tf::Matrix3x3 M(RWC.at<float>(0,0),RWC.at<float>(0,1),RWC.at<float>(0,2),
-		RWC.at<float>(1,0),RWC.at<float>(1,1),RWC.at<float>(1,2),
-		RWC.at<float>(2,0),RWC.at<float>(2,1),RWC.at<float>(2,2));
-	tf::Vector3 V(tWC.at<float>(0), tWC.at<float>(1), tWC.at<float>(2));
-	tf::Quaternion q;
-	M.getRotation(q);
+	// tf::Matrix3x3 M(RWC.at<float>(0,0),RWC.at<float>(0,1),RWC.at<float>(0,2),
+	// 	RWC.at<float>(1,0),RWC.at<float>(1,1),RWC.at<float>(1,2),
+	// 	RWC.at<float>(2,0),RWC.at<float>(2,1),RWC.at<float>(2,2));
+	// tf::Vector3 V(tWC.at<float>(0), tWC.at<float>(1), tWC.at<float>(2));
+	// tf::Quaternion q;
+	// M.getRotation(q);
 
-	static tf::TransformBroadcaster br;
-	tf::Transform transform = tf::Transform(M, V);
-	br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "init_link", "camera_pose"));
+	// static tf::TransformBroadcaster br;
+	// tf::Transform transform = tf::Transform(M, V);
+	// br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "init_link", "camera_pose"));
 
-	geometry_msgs::PoseStamped _pose;
-	_pose.pose.position.x = transform.getOrigin().x();
-	_pose.pose.position.y = transform.getOrigin().y();
-	_pose.pose.position.z = transform.getOrigin().z();
-	_pose.pose.orientation.x = transform.getRotation().x();
-	_pose.pose.orientation.y = transform.getRotation().y();
-	_pose.pose.orientation.z = transform.getRotation().z();
-	_pose.pose.orientation.w = transform.getRotation().w();
+	// geometry_msgs::PoseStamped _pose;
+	// _pose.pose.position.x = transform.getOrigin().x();
+	// _pose.pose.position.y = transform.getOrigin().y();
+	// _pose.pose.position.z = transform.getOrigin().z();
+	// _pose.pose.orientation.x = transform.getRotation().x();
+	// _pose.pose.orientation.y = transform.getRotation().y();
+	// _pose.pose.orientation.z = transform.getRotation().z();
+	// _pose.pose.orientation.w = transform.getRotation().w();
 
-	_pose.header.stamp = ros::Time::now();
-	_pose.header.frame_id = "init_link";
-	pose_pub.publish(_pose);
+	// _pose.header.stamp = ros::Time::now();
+	// _pose.header.frame_id = "init_link";
+	// pose_pub.publish(_pose);
 
-	double min_z = std::numeric_limits<double>::max();  
-	double max_z = std::numeric_limits<double>::min();  
-	bool flag = mpSLAM->mpTracker->mCurrentFrame.getSceneDepth(mpSLAM->mpTracker->mCurrentFrame,max_z,min_z);
-    //ROS_INFO("REACHED 2");
-    //ROS_INFO("Max: %f Min: %f",max_z,min_z);
-	if(flag)
-	{
-		old_min = min_z;
-		old_max = max_z;
-		init = true;
+	// double min_z = std::numeric_limits<double>::max();  
+	// double max_z = std::numeric_limits<double>::min();  
+	// bool flag = mpSLAM->mpTracker->mCurrentFrame.getSceneDepth(mpSLAM->mpTracker->mCurrentFrame,max_z,min_z);
+    // //ROS_INFO("REACHED 2");
+    // //ROS_INFO("Max: %f Min: %f",max_z,min_z);
+	// if(flag)
+	// {
+	// 	old_min = min_z;
+	// 	old_max = max_z;
+	// 	init = true;
 
-	}
-	if(init)
-	{
-		svo_msgs::DenseInput msg_dense;
-		msg_dense.header.stamp = ros::Time::now();
-		msg_dense.header.frame_id = "world";
+	// }
+	// if(init)
+	// {
+	// 	svo_msgs::DenseInput msg_dense;
+	// 	msg_dense.header.stamp = ros::Time::now();
+	// 	msg_dense.header.frame_id = "world";
 
-		cv_bridge::CvImage img_msg;  
-		img_msg.header.stamp=msg_dense.header.stamp;  
-		img_msg.header.frame_id="camera";  
-		img_msg.image=cv_ptr_rgb->image;  
+	// 	cv_bridge::CvImage img_msg;  
+	// 	img_msg.header.stamp=msg_dense.header.stamp;  
+	// 	img_msg.header.frame_id="camera";  
+	// 	img_msg.image=cv_ptr_rgb->image;  
 
-		img_msg.encoding = sensor_msgs::image_encodings::BGR8;  
-		msg_dense.image = *img_msg.toImageMsg();
+	// 	img_msg.encoding = sensor_msgs::image_encodings::BGR8;  
+	// 	msg_dense.image = *img_msg.toImageMsg();
 		
-		msg_dense.min_depth = (float)old_min;
-		msg_dense.max_depth = (float)old_max;
+	// 	msg_dense.min_depth = (float)old_min;
+	// 	msg_dense.max_depth = (float)old_max;
 
-		msg_dense.pose.position.x = tWC.at<float>(0,0);  
-		msg_dense.pose.position.y = tWC.at<float>(1,0);  
-		msg_dense.pose.position.z = tWC.at<float>(2,0);  
-		msg_dense.pose.orientation.x = q.x();
-		msg_dense.pose.orientation.y = q.y();
-		msg_dense.pose.orientation.z = q.z();
-		msg_dense.pose.orientation.w = q.w();
+	// 	msg_dense.pose.position.x = tWC.at<float>(0,0);  
+	// 	msg_dense.pose.position.y = tWC.at<float>(1,0);  
+	// 	msg_dense.pose.position.z = tWC.at<float>(2,0);  
+	// 	msg_dense.pose.orientation.x = q.x();
+	// 	msg_dense.pose.orientation.y = q.y();
+	// 	msg_dense.pose.orientation.z = q.z();
+	// 	msg_dense.pose.orientation.w = q.w();
 
-		pub_dense.publish(msg_dense); 
-
-		cv::Mat pose = mpSLAM->mpTracker->mCurrentFrame.mTcw.rowRange(0,3).colRange(0,4).clone();
-		cv::Mat tmp = mpSLAM->mpTracker->mCurrentFrame.mTcw.inv();
-		cv::Mat poseInv = tmp.rowRange(0,3).colRange(0,4).clone();
-
-		cv::Mat viewMatrix = mpSLAM->mpTracker->mCurrentFrame.mK * pose;
-		
-		stringstream ss;
-		ss << outputPath << "/viewMatrix/" << setprecision(6) << mpSLAM->mpTracker->mCurrentFrame.mTimeStamp << ".txt";
-		ss >> str;
-		ofstream = of(str);
-		of << setprecision(7)
-		   << pose.at<float>(0, 0) << " " << pose.at<float>(0, 1) << " " << pose.at<float>(0, 2) << " " << pose.at<float>(0, 3) << endl
-		   << pose.at<float>(1, 0) << " " << pose.at<float>(1, 1) << " " << pose.at<float>(1, 2) << " " << pose.at<float>(1, 3) << endl
-		   << pose.at<float>(2, 0) << " " << pose.at<float>(2, 1) << " " << pose.at<float>(2, 2) << " " << pose.at<float>(2, 3) << endl
-		   << poseInv.at<float>(0, 0) << " " << poseInv.at<float>(0, 1) << " " << poseInv.at<float>(0, 2) << " " << poseInv.at<float>(0, 3) << endl
-		   << poseInv.at<float>(1, 0) << " " << poseInv.at<float>(1, 1) << " " << poseInv.at<float>(1, 2) << " " << poseInv.at<float>(1, 3) << endl
-		   << poseInv.at<float>(2, 0) << " " << poseInv.at<float>(2, 1) << " " << poseInv.at<float>(2, 2) << " " << poseInv.at<float>(2, 3) << endl
-		   << viewMatrix.at<float>(0, 0) << " " << viewMatrix.at<float>(0, 1) << " " << viewMatrix.at<float>(0, 2) << " " << viewMatrix.at<float>(0, 3) << endl
-		   << viewMatrix.at<float>(1, 0) << " " << viewMatrix.at<float>(1, 1) << " " << viewMatrix.at<float>(1, 2) << " " << viewMatrix.at<float>(1, 3) << endl
-		   << viewMatrix.at<float>(2, 0) << " " << viewMatrix.at<float>(2, 1) << " " << viewMatrix.at<float>(2, 2) << " " << viewMatrix.at<float>(2, 3) << endl;
-	}
-    end = clock();
-    cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-    ROS_INFO_STREAM("exe time: " << cpu_time_used << "\n");
+	// 	pub_dense.publish(msg_dense); 
+	// }
+    // end = clock();
+    // cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+    //ROS_INFO_STREAM("exe time: " << cpu_time_used << "\n");
 }
 
 

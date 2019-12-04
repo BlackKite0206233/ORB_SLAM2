@@ -25,6 +25,9 @@
 #include <thread>
 #include <pangolin/pangolin.h>
 #include <iomanip>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 namespace ORB_SLAM2
 {
@@ -365,6 +368,9 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
 
         cv::Mat Tcw = pKF->GetPose().rowRange(0,3).colRange(0,4).clone();
         cv::Mat Twc = pKF->GetPoseInverse().rowRange(0,3).colRange(0,4).clone();
+        Tcw.at<float>(0, 3) *= 100;
+        Tcw.at<float>(1, 3) *= 100;
+        Tcw.at<float>(2, 3) *= 100;
         cv::Mat result = pKF->mK * Tcw;
 
         //f << setprecision(6) << pKF->mTimeStamp << setprecision(7) << " " << t.at<float>(0) << " " << t.at<float>(1) << " " << t.at<float>(2)

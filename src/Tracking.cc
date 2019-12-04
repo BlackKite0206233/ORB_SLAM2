@@ -37,7 +37,9 @@
 #include<fstream>
 
 #include<mutex>
-
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -1382,7 +1384,7 @@ bool Tracking::Relocalization()
         else
         {
             int nmatches = matcher.SearchByBoW(pKF,mCurrentFrame,vvpMapPointMatches[i]);
-            if(nmatches<15)
+            if(nmatches<10)
             {
                 vbDiscarded[i] = true;
                 continue;
@@ -1390,7 +1392,7 @@ bool Tracking::Relocalization()
             else
             {
                 PnPsolver* pSolver = new PnPsolver(mCurrentFrame,vvpMapPointMatches[i]);
-                pSolver->SetRansacParameters(0.99,10,300,4,0.5,5.991);
+                pSolver->SetRansacParameters(0.99,10,800,4,0.5,5.991);
                 vpPnPsolvers[i] = pSolver;
                 nCandidates++;
             }
@@ -1401,6 +1403,8 @@ bool Tracking::Relocalization()
     // Until we found a camera pose supported by enough inliers
     bool bMatch = false;
     ORBmatcher matcher2(0.9,true);
+
+    const int nIter = 50;
 
     while(nCandidates>0 && !bMatch)
     {
@@ -1415,7 +1419,7 @@ bool Tracking::Relocalization()
             bool bNoMore;
 
             PnPsolver* pSolver = vpPnPsolvers[i];
-            cv::Mat Tcw = pSolver->iterate(5,bNoMore,vbInliers,nInliers);
+            cv::Mat Tcw = pSolver->iterate(nIter,bNoMore,vbInliers,nInliers);
 
             // If Ransac reachs max. iterations discard keyframe
             if(bNoMore)
@@ -1454,17 +1458,17 @@ bool Tracking::Relocalization()
                         mCurrentFrame.mvpMapPoints[io]=static_cast<MapPoint*>(NULL);
 
                 // If few inliers, search by projection in a coarse window and optimize again
-                if(nGood<50)
+                if(nGood<30)
                 {
                     int nadditional =matcher2.SearchByProjection(mCurrentFrame,vpCandidateKFs[i],sFound,10,100);
 
-                    if(nadditional+nGood>=50)
+                    if(nadditional+nGood>=30)
                     {
                         nGood = Optimizer::PoseOptimization(&mCurrentFrame);
 
                         // If many inliers but still not enough, search by projection again in a narrower window
                         // the camera has been already optimized with many points
-                        if(nGood>30 && nGood<50)
+                        if(nGood>15 && nGood<30)
                         {
                             sFound.clear();
                             for(int ip =0; ip<mCurrentFrame.N; ip++)
@@ -1473,7 +1477,7 @@ bool Tracking::Relocalization()
                             nadditional =matcher2.SearchByProjection(mCurrentFrame,vpCandidateKFs[i],sFound,3,64);
 
                             // Final optimization
-                            if(nGood+nadditional>=50)
+                            if(nGood+nadditional>=30)
                             {
                                 nGood = Optimizer::PoseOptimization(&mCurrentFrame);
 
@@ -1487,7 +1491,7 @@ bool Tracking::Relocalization()
 
 
                 // If the pose is supported by enough inliers stop ransacs and continue
-                if(nGood>=50)
+                if(nGood>=30)
                 {
                     bMatch = true;
                     break;
