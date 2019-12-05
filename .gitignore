@@ -1,0 +1,12 @@
+lib/libORB_SLAM2.so
+Examples/ROS/ORB_SLAM2/Mono
+Examples/ROS/ORB_SLAM2/RGBD
+Examples/ROS/ORB_SLAM2/Stereo
+Examples/ROS/ORB_SLAM2/build/
+Thirdparty/DBoW2/build/
+Thirdparty/DBoW2/lib/
+Thirdparty/g2o/build/
+Thirdparty/g2o/config.h
+Thirdparty/g2o/lib/
+Vocabulary/ORBvoc.txt
+build/

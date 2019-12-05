@@ -41,11 +41,15 @@
 #include "tf/transform_datatypes.h"
 #include <tf/transform_broadcaster.h>
 #include <DenseInput.h>
+#include <std_msgs/String.h>
+
 using namespace std;
 using namespace cv;
 
-void mySigintHandler(int s) {
-	ros::shutdown();
+void mySigintHandler(const std_msgs::String::ConstPtr& msg) {
+	if (msg->data == "finish") {
+		ros::shutdown();
+	}
 }
 
 ros::Publisher pose_pub; 
@@ -117,12 +121,12 @@ int main(int argc, char **argv)
 	ImageGrabber igb(&SLAM);
 
 	ros::NodeHandle nodeHandler;
-	ros::Subscriber sub = nodeHandler.subscribe("/camera/rgb/image_color", 1000, &ImageGrabber::GrabImage, &igb);
-	//ros::Subscriber sub = nodeHandler.subscribe("/status", 1000, mySigintHandler);
+	ros::Subscriber subImg = nodeHandler.subscribe("/camera/image_raw", 1000, &ImageGrabber::GrabImage, &igb);
+	ros::Subscriber subStat = nodeHandler.subscribe("/rtsp_camera_relay/status", 1000, mySigintHandler);
 	// pose_pub = nodeHandler.advertise<geometry_msgs::PoseStamped>("/camera_pose",1);
 	// pub_dense = nodeHandler.advertise<svo_msgs::DenseInput>("/ORB/DenseInput",1);
 
-	signal(SIGINT, mySigintHandler);
+	// signal(SIGINT, mySigintHandler);
 	
 	ros::spin();
 
